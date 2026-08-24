@@ -226,7 +226,7 @@ export default async function JobsPage({
           </button>
         </form>
 
-        <div>
+        <div className="min-w-0">
           {error && (
             <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-brand-red">
               Failed to load jobs: {error.message}
