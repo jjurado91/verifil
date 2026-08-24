@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+
+  /* Verifil brand palette */
+  --color-verifil-blue: #1f4993;
+  --color-verifil-blue-dark: #163a75;
+  --color-verifil-red: #d1002d;
+  --color-verifil-gold: #faaf3b;
+  --color-verifil-offwhite: #f9f9f9;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-heading);
+
+  --color-brand-blue: var(--color-verifil-blue);
+  --color-brand-blue-dark: var(--color-verifil-blue-dark);
+  --color-brand-red: var(--color-verifil-red);
+  --color-brand-gold: var(--color-verifil-gold);
+  --color-brand-offwhite: var(--color-verifil-offwhite);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), var(--font-body), sans-serif;
+}
