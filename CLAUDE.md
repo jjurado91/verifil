@@ -57,13 +57,24 @@ Employers and admins are both plain Supabase Auth users in the same
   column.
 - `job_applications` — candidate↔job pipeline, one row per pairing, `status`
   one of `screened | for_interview | for_endorsement | approved | rejected`.
-  Admin-only. Drives both the job page's kanban board and the candidate
-  page's mirrored read-only pipeline view.
-- `candidate_notes` — additive call-log notes, never edited/deleted.
+  Admin-only. Drives the job page's kanban board, the candidate page's
+  mirrored pipeline entries in the activity timeline, and the dashboard's
+  stalled-candidate list. `bulk-actions.ts` upserts these
+  (`onConflict: "job_id,candidate_id"`, `ignoreDuplicates: true`) so
+  bulk-adding candidates to a job never creates duplicate pipeline rows.
+- `candidate_notes` — additive call-log notes, never edited/deleted. Rendered
+  merged into `CandidateTimeline.tsx` alongside profile-created and
+  pipeline-status events, sorted chronologically as one feed.
+- `candidate_documents` — per-candidate files beyond the CV (passport, NBI
+  clearance, medical, certificates — see `doc_type` in `src/lib/documents.ts`)
+  in the private `candidate-documents` storage bucket. Admin-only upload/
+  download/delete via signed URLs.
 - `job_categories` — admin-managed pick-list (`/admin/categories`) that
   replaced a static array; every category `<select>` site-wide fetches this
   live via `src/lib/categories.ts`.
 - `admin_profiles`, `employer_profiles` — see auth model above.
+  `candidates.assigned_admin_name` records ownership (sourced from
+  `src/lib/admins.ts`), shown as a dropdown on `CandidateForm.tsx`.
 
 Countries are **not** database-backed — `src/lib/taxonomy.ts` has a full
 world list with a curated "top" group (Canada, Germany, Hong Kong, Japan,
@@ -81,10 +92,47 @@ every migration goes straight to the linked remote project.
 `src/lib/matching.ts` — deliberately **not AI**. `computeFitScore(candidate,
 job)` is a plain weighted rule set (trade/category match dominates, then
 subcategory overlap, country preference, experience, job openness) returning
-a 0-100 score plus human-readable reasons. Used for the "Matched
-Jobs"/"Matched Candidates" panels and the jobs-page kanban bucketing (a job
-is placed by its furthest-along non-rejected applicant; jobs with no
-applicants, or only rejected ones, land in a leftmost "No Matches" column).
+a 0-100 score plus human-readable reasons. Used for the jobs-page kanban
+bucketing (a job is placed by its furthest-along non-rejected applicant;
+jobs with no applicants, or only rejected ones, land in a leftmost
+"No Matches" column) and for the job detail page's candidate table: every
+approved candidate is scored against that job, sorted best-first, and rows
+≥70 are highlighted. That table also flags a candidate's "Placement" if
+they're already active in another job's pipeline, to prevent double-booking.
+
+## Admin panel structure
+
+- `/admin/dashboard` — stat cards (new CVs last 7 days, pending employer
+  approvals, candidates stalled 14+ days with no status change, open jobs
+  30+ days with zero non-rejected applicants) plus the underlying lists,
+  each linking straight to the relevant record. All queries run in parallel
+  via `Promise.all`; date-window math is done in a small pure helper
+  (`getDateWindows()`) defined outside the component — React's
+  `react-hooks/purity` lint rule flags impure calls like `Date.now()` made
+  directly in an async Server Component body.
+- `/admin` (CV Submissions) — preview (modal, iframe/img by file type) and
+  download via signed-URL routes; converting a submission into a candidate
+  profile deletes the submission row (the storage file is *not* deleted —
+  see the shared-object note below).
+- `/admin/candidates` — search/filter/paginated list (`_shared/` components:
+  `CandidateFilterSidebar`, `CandidateSearchBar`, `CandidatePagination`,
+  `candidate-filters.ts` for the shared parse/PAGE_SIZE=20 logic), rendered
+  by `CandidatesTable.tsx` which adds row checkboxes and a floating
+  bulk-action bar (bulk-add selected candidates to a job's Screened column,
+  or bulk-change status) — see `bulk-actions.ts`.
+  - Candidate detail page wires `CandidateForm` (biodata + ownership),
+    `CandidateDocuments`, and `CandidateTimeline`, plus a
+    `/candidates/[id]/endorsement` printable summary page
+    (`window.print()`, `print:hidden` used elsewhere to hide chrome).
+  - New-candidate flow does duplicate detection by phone/email match against
+    existing candidates — shows a warning with links to the existing
+    profile(s) but does not block creation.
+- `/admin/jobs` — table/kanban toggle (`?view=table|kanban`); job detail page
+  candidate section reuses the same filter/search/pagination pieces as the
+  Candidates list, adding the %fit and Placement columns described above.
+- `/admin/employers` — approve/reject employer accounts (gates their ability
+  to post jobs); detail page has an editable profile form and lists every
+  job that employer has posted.
 
 ## Conventions worth knowing before changing things
 
@@ -111,7 +159,23 @@ applicants, or only rejected ones, land in a leftmost "No Matches" column).
 - `next/loading.tsx` files (app root, `/admin/(protected)`,
   `/employers/portal`) show a spinner + dimmed placeholder automatically
   during server-fetched navigations — no manual loading state needed on
-  those pages.
+  those pages. In practice admin navigations render in ~1-1.3s, so the
+  spinner often doesn't get a chance to paint; that's expected, not a bug.
+- **Admin auth is wrapped in React's `cache()`** (`getAdminProfile` in
+  `src/lib/admin-auth.ts`) so the layout, page, and any server actions that
+  each want to know "is this an admin" within one request share a single
+  Supabase round trip instead of each independently calling
+  `auth.getUser()` + querying `admin_profiles`. Don't reintroduce a
+  duplicate uncached lookup when adding new admin pages/actions.
+- **Vercel functions are pinned to `icn1` (Seoul)** via `vercel.json`
+  `regions`, matching the Supabase project's `ap-northeast-2` region, to
+  avoid cross-region round trips on every query. Keep this in sync if the
+  Supabase project region ever changes.
+- When measuring perceived page speed, don't rely on Playwright's
+  `networkidle` — Next.js prefetches every visible `<Link>`'s RSC payload in
+  the background (e.g. all admin nav items), which keeps the network "busy"
+  well after the page is actually visible and interactive. Measure against
+  a real content selector instead.
 
 ## Environment variables
 
@@ -137,8 +201,5 @@ go out via `supabase db push` *before* the app deploy that depends on them.
   in-code, meant to be swapped for real consented OFW photos before launch.
 - No bulk employer import yet — the admin Job form's hiring-principal
   dropdown only lists employers who self-registered and got approved.
-- Candidate scoring is a manual 0-100 field + notes; AI-driven scoring
-  criteria are TBD (deliberately not built yet — see `score_notes` copy).
-- Job-detail-page candidate picker is mid-redesign: moving from a simple
-  dropdown to a searchable, paginated, filterable table with a %fit column,
-  replacing the separate "Matched Candidates" list.
+- Candidate scoring beyond `computeFitScore` is manual (notes only); no
+  AI-driven scoring is planned — matching stays rule-based by design.
