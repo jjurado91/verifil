@@ -2,6 +2,8 @@ import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { CountryOptions } from "@/components/CountryOptions";
 import { getCategories } from "@/lib/categories";
+import { JobsKanban } from "./JobsKanban";
+import type { ApplicationStatus } from "@/lib/applications";
 
 const statusStyles: Record<string, string> = {
   open: "bg-green-100 text-green-700",
@@ -37,6 +39,7 @@ export default async function JobsPage({
     added_by?: string | string[];
     country?: string;
     category?: string;
+    view?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -44,6 +47,7 @@ export default async function JobsPage({
   const addedByFilter = toArray(params.added_by);
   const countryFilter = params.country ?? "";
   const categoryFilter = params.category ?? "";
+  const view = params.view === "kanban" ? "kanban" : "table";
 
   let query = supabaseAdmin
     .from("jobs")
@@ -56,10 +60,12 @@ export default async function JobsPage({
   if (countryFilter) query = query.eq("country", countryFilter);
   if (categoryFilter) query = query.eq("category", categoryFilter);
 
-  const [{ data: jobs, error }, categories] = await Promise.all([
-    query,
-    getCategories(),
-  ]);
+  const [{ data: jobs, error }, categories, { data: applicationStatuses }] =
+    await Promise.all([
+      query,
+      getCategories(),
+      supabaseAdmin.from("job_applications").select("job_id, status"),
+    ]);
 
   const hasFilters =
     statusFilter.length > 0 ||
@@ -67,9 +73,20 @@ export default async function JobsPage({
     Boolean(countryFilter) ||
     Boolean(categoryFilter);
 
+  const viewHref = (v: "table" | "kanban") => {
+    const qs = new URLSearchParams();
+    statusFilter.forEach((s) => qs.append("status", s));
+    addedByFilter.forEach((a) => qs.append("added_by", a));
+    if (countryFilter) qs.set("country", countryFilter);
+    if (categoryFilter) qs.set("category", categoryFilter);
+    if (v !== "table") qs.set("view", v);
+    const query = qs.toString();
+    return `/admin/jobs${query ? `?${query}` : ""}`;
+  };
+
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-extrabold text-slate-900">Jobs</h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -77,12 +94,36 @@ export default async function JobsPage({
             self-service.
           </p>
         </div>
-        <Link
-          href="/admin/jobs/new"
-          className="rounded-full bg-brand-blue px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-blue-dark"
-        >
-          + Add Job
-        </Link>
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="flex rounded-full border border-slate-200 bg-white p-1">
+            <Link
+              href={viewHref("table")}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                view === "table"
+                  ? "bg-brand-blue text-white"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              Table
+            </Link>
+            <Link
+              href={viewHref("kanban")}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                view === "kanban"
+                  ? "bg-brand-blue text-white"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              Kanban
+            </Link>
+          </div>
+          <Link
+            href="/admin/jobs/new"
+            className="rounded-full bg-brand-blue px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-blue-dark"
+          >
+            + Add Job
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr]">
@@ -192,73 +233,85 @@ export default async function JobsPage({
             </p>
           )}
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-            <table className="w-full min-w-[1040px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Role</th>
-                  <th className="px-4 py-3">Country</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Added By</th>
-                  <th className="px-4 py-3">Added Date</th>
-                  <th className="px-4 py-3"># Roles</th>
-                  <th className="px-4 py-3">Aging</th>
-                  <th className="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {jobs?.map((job) => (
-                  <tr key={job.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-semibold text-slate-900">
-                      <Link
-                        href={`/admin/jobs/${job.id}`}
-                        className="hover:underline"
-                      >
-                        {job.role_title}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{job.country}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {job.category}
-                      {job.subcategory && (
-                        <span className="text-slate-400">
-                          {" "}
-                          / {job.subcategory}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      <div>{job.added_by_name ?? "—"}</div>
-                      {job.added_by_role && (
-                        <div className="text-xs capitalize text-slate-400">
-                          {job.added_by_role}
-                        </div>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                      {new Date(job.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{job.openings}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {agingLabel(job.created_at)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[job.status] ?? "bg-slate-100 text-slate-600"}`}
-                      >
-                        {job.status}
-                      </span>
-                    </td>
+          {view === "kanban" ? (
+            <JobsKanban
+              jobs={jobs ?? []}
+              applicationStatuses={
+                (applicationStatuses ?? []) as {
+                  job_id: string;
+                  status: ApplicationStatus;
+                }[]
+              }
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+              <table className="w-full min-w-[1040px] text-left text-sm">
+                <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Role</th>
+                    <th className="px-4 py-3">Country</th>
+                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Added By</th>
+                    <th className="px-4 py-3">Added Date</th>
+                    <th className="px-4 py-3"># Roles</th>
+                    <th className="px-4 py-3">Aging</th>
+                    <th className="px-4 py-3">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {jobs?.length === 0 && (
-              <p className="px-4 py-8 text-center text-sm text-slate-400">
-                No jobs match these filters.
-              </p>
-            )}
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {jobs?.map((job) => (
+                    <tr key={job.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 font-semibold text-slate-900">
+                        <Link
+                          href={`/admin/jobs/${job.id}`}
+                          className="hover:underline"
+                        >
+                          {job.role_title}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{job.country}</td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {job.category}
+                        {job.subcategory && (
+                          <span className="text-slate-400">
+                            {" "}
+                            / {job.subcategory}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">
+                        <div>{job.added_by_name ?? "—"}</div>
+                        {job.added_by_role && (
+                          <div className="text-xs capitalize text-slate-400">
+                            {job.added_by_role}
+                          </div>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                        {new Date(job.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{job.openings}</td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {agingLabel(job.created_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[job.status] ?? "bg-slate-100 text-slate-600"}`}
+                        >
+                          {job.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {jobs?.length === 0 && (
+                <p className="px-4 py-8 text-center text-sm text-slate-400">
+                  No jobs match these filters.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
