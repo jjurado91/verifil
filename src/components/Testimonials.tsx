@@ -20,6 +20,7 @@ export function Testimonials() {
                     src={t.photo}
                     alt={t.name}
                     fill
+                    sizes="44px"
                     className="object-cover"
                   />
                 </div>

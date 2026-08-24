@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { supabase } from "@/lib/supabase";
+
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 const TRADES = [
   "Construction",
@@ -29,15 +32,51 @@ export function CvForm() {
   const [submitted, setSubmitted] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // Placeholder submit — wire this up to Supabase (table + storage bucket for the CV file) later.
+    setError(null);
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const cvFile = data.get("cv") as File;
+
+    if (cvFile && cvFile.size > MAX_FILE_BYTES) {
+      setError("That file is over 10MB. Please upload a smaller file.");
+      return;
+    }
+
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      const filePath = `${crypto.randomUUID()}-${cvFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("resumes")
+        .upload(filePath, cvFile);
+      if (uploadError) throw uploadError;
+
+      const { error: insertError } = await supabase
+        .from("cv_submissions")
+        .insert({
+          full_name: data.get("fullName") as string,
+          mobile: data.get("mobile") as string,
+          email: (data.get("email") as string) || null,
+          trade: data.get("trade") as string,
+          experience_years: Number(data.get("experience")),
+          preferred_country: data.get("country") as string,
+          cv_file_path: filePath,
+          cv_file_name: cvFile.name,
+        });
+      if (insertError) throw insertError;
+
       setSubmitted(true);
-    }, 700);
+    } catch {
+      setError(
+        "Something went wrong submitting your CV. Please try again in a moment.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -253,6 +292,12 @@ export function CvForm() {
             2012.
           </span>
         </label>
+
+        {error && (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-brand-red">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
