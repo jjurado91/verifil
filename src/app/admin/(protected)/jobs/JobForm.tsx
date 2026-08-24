@@ -8,6 +8,7 @@ export type JobFormValues = {
   id?: string;
   agency_name?: string;
   hiring_principal?: string;
+  employer_id?: string | null;
   country?: string;
   category?: string;
   subcategory?: string | null;
@@ -29,10 +30,12 @@ export function JobForm({
   initial,
   action,
   categories,
+  employers,
 }: {
   initial?: JobFormValues;
   action: (formData: FormData) => Promise<void>;
   categories: string[];
+  employers: { id: string; company_name: string }[];
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -70,13 +73,29 @@ export function JobForm({
         </div>
         <div>
           <label className={labelClass}>Hiring principal</label>
-          <input
-            name="hiring_principal"
+          <select
+            name="employer_id"
             required
-            defaultValue={initial?.hiring_principal}
-            placeholder="The actual employer abroad"
+            defaultValue={initial?.employer_id ?? ""}
             className={inputClass}
-          />
+          >
+            <option value="" disabled>
+              {employers.length === 0
+                ? "No registered employers yet"
+                : "Select employer"}
+            </option>
+            {employers.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.company_name}
+              </option>
+            ))}
+          </select>
+          {employers.length === 0 && (
+            <p className="mt-1 text-xs text-slate-400">
+              Only registered, approved employers can be a hiring
+              principal — ask them to sign up, or wait for bulk import.
+            </p>
+          )}
         </div>
       </div>
 

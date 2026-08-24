@@ -5,6 +5,7 @@ import { computeFitScore } from "@/lib/matching";
 import { JobForm } from "../JobForm";
 import { updateJob } from "../actions";
 import { getCategories } from "@/lib/categories";
+import { getApprovedEmployers } from "@/lib/employers";
 import { JobApplicantsBoard, type Applicant } from "../JobApplicantsBoard";
 
 export default async function JobDetailPage({
@@ -14,18 +15,24 @@ export default async function JobDetailPage({
 }) {
   const { id } = await params;
 
-  const [{ data: job }, { data: candidates }, categories, { data: applications }] =
-    await Promise.all([
-      supabaseAdmin.from("jobs").select("*").eq("id", id).single(),
-      supabaseAdmin
-        .from("candidates")
-        .select("id, full_name, trade, preferred_country, experience_years, status, score"),
-      getCategories(),
-      supabaseAdmin
-        .from("job_applications")
-        .select("id, candidate_id, status, candidates(full_name, score)")
-        .eq("job_id", id),
-    ]);
+  const [
+    { data: job },
+    { data: candidates },
+    categories,
+    employers,
+    { data: applications },
+  ] = await Promise.all([
+    supabaseAdmin.from("jobs").select("*").eq("id", id).single(),
+    supabaseAdmin
+      .from("candidates")
+      .select("id, full_name, trade, preferred_country, experience_years, status, score"),
+    getCategories(),
+    getApprovedEmployers(),
+    supabaseAdmin
+      .from("job_applications")
+      .select("id, candidate_id, status, candidates(full_name, score)")
+      .eq("job_id", id),
+  ]);
 
   if (!job) notFound();
 
@@ -78,6 +85,7 @@ export default async function JobDetailPage({
           initial={job}
           action={updateJob.bind(null, id)}
           categories={categories}
+          employers={employers}
         />
 
         <div>

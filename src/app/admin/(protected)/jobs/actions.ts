@@ -17,14 +17,28 @@ function numOrNull(value: FormDataEntryValue | null) {
   return Number.isFinite(n) ? n : null;
 }
 
+async function resolveEmployer(formData: FormData) {
+  const employerId = formData.get("employer_id") as string;
+  const { data: employer, error } = await supabaseAdmin
+    .from("employer_profiles")
+    .select("id, company_name")
+    .eq("id", employerId)
+    .single();
+
+  if (error || !employer) throw new Error("Please select a valid hiring principal.");
+  return employer;
+}
+
 export async function createJob(formData: FormData) {
   const adminName = await requireAdmin();
+  const employer = await resolveEmployer(formData);
 
   const { data, error } = await supabaseAdmin
     .from("jobs")
     .insert({
       agency_name: formData.get("agency_name") as string,
-      hiring_principal: formData.get("hiring_principal") as string,
+      hiring_principal: employer.company_name,
+      employer_id: employer.id,
       country: formData.get("country") as string,
       category: formData.get("category") as string,
       subcategory: (formData.get("subcategory") as string) || null,
@@ -50,12 +64,14 @@ export async function createJob(formData: FormData) {
 
 export async function updateJob(id: string, formData: FormData) {
   await requireAdmin();
+  const employer = await resolveEmployer(formData);
 
   const { error } = await supabaseAdmin
     .from("jobs")
     .update({
       agency_name: formData.get("agency_name") as string,
-      hiring_principal: formData.get("hiring_principal") as string,
+      hiring_principal: employer.company_name,
+      employer_id: employer.id,
       country: formData.get("country") as string,
       category: formData.get("category") as string,
       subcategory: (formData.get("subcategory") as string) || null,

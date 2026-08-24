@@ -1,9 +1,13 @@
 import { JobForm } from "../JobForm";
 import { createJob } from "../actions";
 import { getCategories } from "@/lib/categories";
+import { getApprovedEmployers } from "@/lib/employers";
 
 export default async function NewJobPage() {
-  const categories = await getCategories();
+  const [categories, employers] = await Promise.all([
+    getCategories(),
+    getApprovedEmployers(),
+  ]);
 
   return (
     <div>
@@ -13,7 +17,7 @@ export default async function NewJobPage() {
         principal.
       </p>
       <div className="mt-4">
-        <JobForm action={createJob} categories={categories} />
+        <JobForm action={createJob} categories={categories} employers={employers} />
       </div>
     </div>
   );
