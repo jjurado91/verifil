@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -6,8 +7,13 @@ import { createClient } from "@/lib/supabase/server";
  * admin_profiles. Employers authenticate through the same Supabase Auth
  * user pool but never get a row there, so this check alone separates
  * the two — no separate password/cookie scheme needed.
+ *
+ * Wrapped in React's cache() so the several call sites that each want
+ * to know "is this an admin" / "what's their name" within one request
+ * (layout + page + any server actions) share a single Supabase round
+ * trip instead of each re-validating the session from scratch.
  */
-export async function getAdminProfile() {
+export const getAdminProfile = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -21,7 +27,7 @@ export async function getAdminProfile() {
     .maybeSingle();
 
   return profile;
-}
+});
 
 export async function isAdminAuthenticated() {
   return Boolean(await getAdminProfile());

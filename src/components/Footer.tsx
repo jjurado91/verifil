@@ -34,7 +34,7 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
           <Image
-            src="/logo/verifil-logo-white.png"
+            src="/logo/verifil-logo.png"
             alt="Verifil"
             width={397}
             height={100}
