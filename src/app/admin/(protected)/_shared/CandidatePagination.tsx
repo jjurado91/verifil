@@ -9,6 +9,7 @@ function buildHref(basePath: string, filters: ParsedCandidateFilters, page: numb
   if (filters.minExp) qs.set("min_exp", filters.minExp);
   if (filters.maxExp) qs.set("max_exp", filters.maxExp);
   filters.status.forEach((s) => qs.append("status", s));
+  if (filters.assigned) qs.set("assigned", filters.assigned);
   if (page > 1) qs.set("page", String(page));
   const query = qs.toString();
   return `${basePath}${query ? `?${query}` : ""}`;

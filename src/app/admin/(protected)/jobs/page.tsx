@@ -3,13 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { CountryOptions } from "@/components/CountryOptions";
 import { getCategories } from "@/lib/categories";
 import { JobsKanban } from "./JobsKanban";
+import { JobsTable } from "./JobsTable";
 import type { ApplicationStatus } from "@/lib/applications";
-
-const statusStyles: Record<string, string> = {
-  open: "bg-green-100 text-green-700",
-  filled: "bg-brand-offwhite text-slate-600",
-  closed: "bg-slate-200 text-slate-500",
-};
 
 const STATUSES = ["open", "filled", "closed"];
 const ADDED_BY_ROLES = [
@@ -20,15 +15,6 @@ const ADDED_BY_ROLES = [
 function toArray(value: string | string[] | undefined) {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
-}
-
-function agingLabel(createdAt: string) {
-  const days = Math.floor(
-    (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (days <= 0) return "Today";
-  if (days === 1) return "1 day";
-  return `${days} days`;
 }
 
 export default async function JobsPage({
@@ -84,6 +70,12 @@ export default async function JobsPage({
     return `/admin/jobs${query ? `?${query}` : ""}`;
   };
 
+  const exportQs = new URLSearchParams();
+  statusFilter.forEach((s) => exportQs.append("status", s));
+  addedByFilter.forEach((a) => exportQs.append("added_by", a));
+  if (countryFilter) exportQs.set("country", countryFilter);
+  if (categoryFilter) exportQs.set("category", categoryFilter);
+
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
@@ -113,6 +105,12 @@ export default async function JobsPage({
               Kanban
             </Link>
           </div>
+          <a
+            href={`/admin/jobs/export?${exportQs.toString()}`}
+            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+          >
+            Export CSV
+          </a>
           <Link
             href="/admin/jobs/new"
             className="rounded-full bg-brand-blue px-5 py-2 text-sm font-bold text-white transition hover:bg-brand-blue-dark"
@@ -240,73 +238,7 @@ export default async function JobsPage({
               }
             />
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-              <table className="w-full min-w-[1040px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Country</th>
-                    <th className="px-4 py-3">Category</th>
-                    <th className="px-4 py-3">Added By</th>
-                    <th className="px-4 py-3">Added Date</th>
-                    <th className="px-4 py-3"># Roles</th>
-                    <th className="px-4 py-3">Aging</th>
-                    <th className="px-4 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {jobs?.map((job) => (
-                    <tr key={job.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-semibold text-slate-900">
-                        <Link
-                          href={`/admin/jobs/${job.id}`}
-                          className="hover:underline"
-                        >
-                          {job.role_title}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-slate-600">{job.country}</td>
-                      <td className="px-4 py-3 text-slate-600">
-                        {job.category}
-                        {job.subcategory && (
-                          <span className="text-slate-400">
-                            {" "}
-                            / {job.subcategory}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600">
-                        <div>{job.added_by_name ?? "—"}</div>
-                        {job.added_by_role && (
-                          <div className="text-xs capitalize text-slate-400">
-                            {job.added_by_role}
-                          </div>
-                        )}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                        {new Date(job.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600">{job.openings}</td>
-                      <td className="px-4 py-3 text-slate-600">
-                        {agingLabel(job.created_at)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[job.status] ?? "bg-slate-100 text-slate-600"}`}
-                        >
-                          {job.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {jobs?.length === 0 && (
-                <p className="px-4 py-8 text-center text-sm text-slate-400">
-                  No jobs match these filters.
-                </p>
-              )}
-            </div>
+            <JobsTable jobs={jobs ?? []} />
           )}
         </div>
       </div>

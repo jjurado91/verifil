@@ -1,6 +1,13 @@
-export function CandidateSearchBar({ defaultValue }: { defaultValue: string }) {
+export function CandidateSearchBar({
+  defaultValue,
+  assigned,
+}: {
+  defaultValue: string;
+  assigned?: string;
+}) {
   return (
     <div className="flex items-center gap-2">
+      {assigned && <input type="hidden" name="assigned" value={assigned} />}
       <div className="relative flex-1">
         <svg
           viewBox="0 0 24 24"

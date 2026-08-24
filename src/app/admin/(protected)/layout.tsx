@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { isAdminAuthenticated, getAdminName } from "@/lib/admin-auth";
 import { logout } from "../actions";
 import { AdminNav } from "./AdminNav";
+import { GlobalSearch } from "./GlobalSearch";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ export default async function AdminLayout({
             <AdminNav adminName={adminName} logout={logout} />
           </div>
           <div className="hidden items-center gap-3 md:flex">
+            <GlobalSearch />
             <span className="text-sm font-semibold text-slate-500">
               {adminName}
             </span>
@@ -51,6 +53,9 @@ export default async function AdminLayout({
               </button>
             </form>
           </div>
+        </div>
+        <div className="border-t border-slate-100 px-4 py-2.5 sm:px-6 md:hidden">
+          <GlobalSearch />
         </div>
       </div>
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</div>

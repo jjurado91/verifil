@@ -62,6 +62,19 @@ export async function createJob(formData: FormData) {
   redirect(`/admin/jobs/${data.id}`);
 }
 
+export async function updateJobStatus(id: string, status: string) {
+  await requireAdmin();
+
+  const { error } = await supabaseAdmin
+    .from("jobs")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/jobs");
+  revalidatePath(`/admin/jobs/${id}`);
+}
+
 export async function updateJob(id: string, formData: FormData) {
   await requireAdmin();
   const employer = await resolveEmployer(formData);

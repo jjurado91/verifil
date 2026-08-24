@@ -38,6 +38,17 @@ export function CandidatesTable({
   const [selectedJob, setSelectedJob] = useState("");
   const [bulkStatus, setBulkStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [rowUpdating, setRowUpdating] = useState<string | null>(null);
+
+  async function handleRowStatusChange(id: string, status: string) {
+    setRowUpdating(id);
+    try {
+      await bulkUpdateCandidateStatus([id], status);
+      router.refresh();
+    } finally {
+      setRowUpdating(null);
+    }
+  }
 
   const allSelected = rows.length > 0 && selected.size === rows.length;
 
@@ -211,11 +222,19 @@ export function CandidatesTable({
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[c.status] ?? "bg-slate-100 text-slate-600"}`}
+                  <select
+                    value={c.status}
+                    disabled={rowUpdating === c.id}
+                    onChange={(e) => handleRowStatusChange(c.id, e.target.value)}
+                    className={`rounded-full border-0 px-2.5 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-blue/30 disabled:opacity-60 ${statusStyles[c.status] ?? "bg-slate-100 text-slate-600"}`}
                   >
-                    {c.status}
-                  </span>
+                    <option value="new">New</option>
+                    <option value="screening">Screening</option>
+                    <option value="verified">Verified</option>
+                    <option value="matched">Matched</option>
+                    <option value="deployed">Deployed</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
                 </td>
                 <td className="px-4 py-3 text-slate-600">
                   {c.assigned_admin_name ?? <span className="text-slate-300">—</span>}

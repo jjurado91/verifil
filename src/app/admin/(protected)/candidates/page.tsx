@@ -1,8 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getCategories } from "@/lib/categories";
+import { getAdminName } from "@/lib/admin-auth";
 import { CandidateFilterSidebar } from "../_shared/CandidateFilterSidebar";
 import { CandidateSearchBar } from "../_shared/CandidateSearchBar";
 import { CandidatePagination } from "../_shared/CandidatePagination";
+import { MyCandidatesToggle } from "../_shared/MyCandidatesToggle";
 import { CandidatesTable, type CandidateRow } from "./CandidatesTable";
 import {
   parseCandidateFilters,
@@ -32,6 +34,7 @@ export default async function CandidatesPage({
   if (filters.minExp) query = query.gte("experience_years", Number(filters.minExp));
   if (filters.maxExp) query = query.lte("experience_years", Number(filters.maxExp));
   if (filters.status.length > 0) query = query.in("status", filters.status);
+  if (filters.assigned) query = query.eq("assigned_admin_name", filters.assigned);
 
   const from = (filters.page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
@@ -41,6 +44,7 @@ export default async function CandidatesPage({
     { data: applications },
     categories,
     { data: openJobs },
+    adminName,
   ] = await Promise.all([
     query.range(from, to),
     supabaseAdmin.from("job_applications").select("candidate_id, status"),
@@ -50,6 +54,7 @@ export default async function CandidatesPage({
       .select("id, role_title")
       .eq("status", "open")
       .order("role_title", { ascending: true }),
+    getAdminName(),
   ]);
 
   const pipelineCounts = new Map<string, { active: number; rejected: number }>();
@@ -74,9 +79,26 @@ export default async function CandidatesPage({
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
+  const exportQs = new URLSearchParams();
+  if (filters.q) exportQs.set("q", filters.q);
+  if (filters.trade) exportQs.set("trade", filters.trade);
+  if (filters.country) exportQs.set("country", filters.country);
+  if (filters.minExp) exportQs.set("min_exp", filters.minExp);
+  if (filters.maxExp) exportQs.set("max_exp", filters.maxExp);
+  filters.status.forEach((s) => exportQs.append("status", s));
+  if (filters.assigned) exportQs.set("assigned", filters.assigned);
+
   return (
     <div>
-      <h1 className="text-xl font-extrabold text-slate-900">Candidates</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-xl font-extrabold text-slate-900">Candidates</h1>
+        <a
+          href={`/admin/candidates/export?${exportQs.toString()}`}
+          className="shrink-0 rounded-full border border-slate-300 px-4 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+        >
+          Export CSV
+        </a>
+      </div>
 
       <form
         method="get"
@@ -89,7 +111,16 @@ export default async function CandidatesPage({
         />
 
         <div className="min-w-0">
-          <CandidateSearchBar defaultValue={filters.q} />
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex-1">
+              <CandidateSearchBar defaultValue={filters.q} assigned={filters.assigned} />
+            </div>
+            <MyCandidatesToggle
+              basePath="/admin/candidates"
+              filters={filters}
+              adminName={adminName}
+            />
+          </div>
 
           {error && (
             <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-brand-red">

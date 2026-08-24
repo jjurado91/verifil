@@ -5,6 +5,7 @@ export type CandidateFilterParams = {
   min_exp?: string;
   max_exp?: string;
   status?: string | string[];
+  assigned?: string;
   page?: string;
 };
 
@@ -15,6 +16,7 @@ export type ParsedCandidateFilters = {
   minExp: string;
   maxExp: string;
   status: string[];
+  assigned: string;
   page: number;
 };
 
@@ -32,13 +34,20 @@ export function parseCandidateFilters(
         ? params.status
         : [params.status]
       : [],
+    assigned: params.assigned ?? "",
     page: Math.max(1, Number(params.page) || 1),
   };
 }
 
 export function hasActiveCandidateFilters(f: ParsedCandidateFilters) {
   return Boolean(
-    f.q || f.trade || f.country || f.minExp || f.maxExp || f.status.length,
+    f.q ||
+      f.trade ||
+      f.country ||
+      f.minExp ||
+      f.maxExp ||
+      f.status.length ||
+      f.assigned,
   );
 }
 
