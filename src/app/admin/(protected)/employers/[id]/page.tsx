@@ -67,9 +67,17 @@ export default async function EmployerDetailPage({
         />
 
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-            Jobs Posted
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+              Jobs Posted
+            </h2>
+            <Link
+              href={`/admin/jobs/new?employer_id=${id}`}
+              className="shrink-0 rounded-full bg-brand-blue px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-blue-dark"
+            >
+              + Add Job
+            </Link>
+          </div>
           <div className="mt-3 flex flex-col gap-3">
             {jobs?.map((job) => (
               <Link

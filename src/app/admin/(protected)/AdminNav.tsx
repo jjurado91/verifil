@@ -8,8 +8,8 @@ const navLinks = [
   { href: "/admin/dashboard", label: "Dashboard" },
   { href: "/admin", label: "CV Submissions" },
   { href: "/admin/candidates", label: "Candidates" },
-  { href: "/admin/jobs", label: "Jobs" },
   { href: "/admin/employers", label: "Employers" },
+  { href: "/admin/jobs", label: "Jobs" },
   { href: "/admin/categories", label: "Job Categories" },
 ];
 
