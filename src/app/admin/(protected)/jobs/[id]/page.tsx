@@ -5,6 +5,7 @@ import { computeFitScore } from "@/lib/matching";
 import { JobForm } from "../JobForm";
 import { updateJob } from "../actions";
 import { getCategories } from "@/lib/categories";
+import { JobApplicantsBoard, type Applicant } from "../JobApplicantsBoard";
 
 export default async function JobDetailPage({
   params,
@@ -13,13 +14,18 @@ export default async function JobDetailPage({
 }) {
   const { id } = await params;
 
-  const [{ data: job }, { data: candidates }, categories] = await Promise.all([
-    supabaseAdmin.from("jobs").select("*").eq("id", id).single(),
-    supabaseAdmin
-      .from("candidates")
-      .select("id, full_name, trade, preferred_country, experience_years, status"),
-    getCategories(),
-  ]);
+  const [{ data: job }, { data: candidates }, categories, { data: applications }] =
+    await Promise.all([
+      supabaseAdmin.from("jobs").select("*").eq("id", id).single(),
+      supabaseAdmin
+        .from("candidates")
+        .select("id, full_name, trade, preferred_country, experience_years, status, score"),
+      getCategories(),
+      supabaseAdmin
+        .from("job_applications")
+        .select("id, candidate_id, status, candidates(full_name, score)")
+        .eq("job_id", id),
+    ]);
 
   if (!job) notFound();
 
@@ -31,6 +37,25 @@ export default async function JobDetailPage({
     .filter((m) => m.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 15);
+
+  const applicants: Applicant[] = (applications ?? []).map((a) => {
+    const candidate = a.candidates as unknown as {
+      full_name: string;
+      score: number | null;
+    } | null;
+    return {
+      id: a.id,
+      candidate_id: a.candidate_id,
+      status: a.status,
+      full_name: candidate?.full_name ?? "Unknown",
+      score: candidate?.score ?? null,
+    };
+  });
+
+  const applicantIds = new Set(applicants.map((a) => a.candidate_id));
+  const availableCandidates = (candidates ?? [])
+    .filter((c) => !applicantIds.has(c.id))
+    .map((c) => ({ id: c.id, full_name: c.full_name }));
 
   return (
     <div>
@@ -86,6 +111,14 @@ export default async function JobDetailPage({
             )}
           </div>
         </div>
+      </div>
+
+      <div className="mt-8">
+        <JobApplicantsBoard
+          jobId={id}
+          applicants={applicants}
+          availableCandidates={availableCandidates}
+        />
       </div>
     </div>
   );
