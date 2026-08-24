@@ -2,31 +2,12 @@
 
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
+import { CATEGORIES, COUNTRIES as COUNTRY_LIST } from "@/lib/taxonomy";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
-const TRADES = [
-  "Construction",
-  "Logistics / Warehouse",
-  "Welding / Fabrication",
-  "Electrical",
-  "Healthcare & Caregiving",
-  "Hospitality / Food Service",
-  "Manufacturing",
-  "Driving / Heavy Equipment",
-  "Other",
-];
-
-const COUNTRIES = [
-  "No preference",
-  "Saudi Arabia",
-  "UAE",
-  "Qatar",
-  "Canada",
-  "Japan",
-  "Germany",
-  "Other",
-];
+const TRADES = CATEGORIES;
+const COUNTRIES = ["No preference", ...COUNTRY_LIST];
 
 export function CvForm() {
   const [submitted, setSubmitted] = useState(false);
