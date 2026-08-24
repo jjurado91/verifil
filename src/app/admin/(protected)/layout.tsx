@@ -1,9 +1,9 @@
+import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { isAdminAuthenticated, getAdminName } from "@/lib/admin-auth";
-import { LoginForm } from "./LoginForm";
-import { logout } from "./actions";
+import { logout } from "../actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const authed = await isAdminAuthenticated();
-  if (!authed) return <LoginForm />;
+  if (!authed) redirect("/admin/login");
 
   const adminName = await getAdminName();
 

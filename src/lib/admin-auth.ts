@@ -1,41 +1,33 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 
-const COOKIE_NAME = "verifil_admin_session";
-const NAME_COOKIE_NAME = "verifil_admin_name";
-const MAX_AGE = 60 * 60 * 8;
+/**
+ * An "admin" is any authenticated Supabase user with a row in
+ * admin_profiles. Employers authenticate through the same Supabase Auth
+ * user pool but never get a row there, so this check alone separates
+ * the two — no separate password/cookie scheme needed.
+ */
+export async function getAdminProfile() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("admin_profiles")
+    .select("name, email")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return profile;
+}
 
 export async function isAdminAuthenticated() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get(COOKIE_NAME)?.value;
-  return Boolean(session) && session === process.env.ADMIN_PASSWORD;
+  return Boolean(await getAdminProfile());
 }
 
 export async function getAdminName() {
-  const cookieStore = await cookies();
-  return cookieStore.get(NAME_COOKIE_NAME)?.value ?? "Admin";
-}
-
-export async function setAdminSession(name: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, process.env.ADMIN_PASSWORD!, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    path: "/",
-    maxAge: MAX_AGE,
-  });
-  cookieStore.set(NAME_COOKIE_NAME, name, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    path: "/",
-    maxAge: MAX_AGE,
-  });
-}
-
-export async function clearAdminSession() {
-  const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
-  cookieStore.delete(NAME_COOKIE_NAME);
+  const profile = await getAdminProfile();
+  return profile?.name ?? "Admin";
 }
