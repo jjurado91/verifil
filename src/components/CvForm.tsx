@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { CATEGORIES, COUNTRIES as COUNTRY_LIST } from "@/lib/taxonomy";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -30,6 +30,7 @@ export function CvForm() {
 
     setSubmitting(true);
     try {
+      const supabase = createClient();
       const filePath = `${crypto.randomUUID()}-${cvFile.name}`;
       const { error: uploadError } = await supabase.storage
         .from("resumes")

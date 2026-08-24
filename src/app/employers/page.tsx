@@ -52,17 +52,17 @@ export default function EmployersPage() {
               and more — with transparent pricing and no hidden fees.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="mailto:hire@verifiljobs.com?subject=Employer%20Inquiry"
+              <Link
+                href="/employers/signup"
                 className="rounded-full bg-brand-gold px-7 py-3.5 text-center text-base font-bold text-slate-900 shadow-lg shadow-black/20 transition hover:brightness-95"
               >
-                Get in Touch
-              </a>
+                Create Employer Account
+              </Link>
               <Link
-                href="/#jobs"
+                href="/employers/login"
                 className="rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-center text-base font-bold text-white backdrop-blur transition hover:bg-white/20"
               >
-                See Candidate Pool
+                Log In
               </Link>
             </div>
           </div>
@@ -91,15 +91,24 @@ export default function EmployersPage() {
                 Ready to build your team?
               </h2>
               <p className="mt-2 text-sm text-slate-600">
-                Tell us what roles you&apos;re hiring for and we&apos;ll get
-                back to you with a shortlist of verified candidates.
+                Create a free account and start posting job openings in
+                minutes — or reach out directly if you&apos;d rather talk
+                first.
               </p>
-              <a
-                href="mailto:hire@verifiljobs.com?subject=Employer%20Inquiry"
-                className="mt-5 inline-block rounded-full bg-brand-blue px-7 py-3 text-sm font-bold text-white transition hover:bg-brand-blue-dark"
-              >
-                hire@verifiljobs.com
-              </a>
+              <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  href="/employers/signup"
+                  className="rounded-full bg-brand-blue px-7 py-3 text-sm font-bold text-white transition hover:bg-brand-blue-dark"
+                >
+                  Create Employer Account
+                </Link>
+                <a
+                  href="mailto:hire@verifiljobs.com?subject=Employer%20Inquiry"
+                  className="text-sm font-semibold text-slate-500 hover:text-slate-700"
+                >
+                  hire@verifiljobs.com
+                </a>
+              </div>
             </div>
           </div>
         </section>

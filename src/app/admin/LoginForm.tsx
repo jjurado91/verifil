@@ -14,10 +14,17 @@ export function LoginForm() {
       </p>
       <form action={formAction} className="mt-6 flex flex-col gap-3">
         <input
+          type="text"
+          name="name"
+          required
+          autoFocus
+          placeholder="Your name"
+          className="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+        />
+        <input
           type="password"
           name="password"
           required
-          autoFocus
           placeholder="Password"
           className="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
         />

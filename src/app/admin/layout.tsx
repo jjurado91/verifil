@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { isAdminAuthenticated, getAdminName } from "@/lib/admin-auth";
 import { LoginForm } from "./LoginForm";
 import { logout } from "./actions";
 
@@ -24,6 +24,8 @@ export default async function AdminLayout({
 }) {
   const authed = await isAdminAuthenticated();
   if (!authed) return <LoginForm />;
+
+  const adminName = await getAdminName();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -49,14 +51,19 @@ export default async function AdminLayout({
               ))}
             </nav>
           </div>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="rounded-full border border-slate-300 px-4 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
-            >
-              Log out
-            </button>
-          </form>
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm font-semibold text-slate-500 sm:inline">
+              {adminName}
+            </span>
+            <form action={logout}>
+              <button
+                type="submit"
+                className="rounded-full border border-slate-300 px-4 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+              >
+                Log out
+              </button>
+            </form>
+          </div>
         </div>
       </div>
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</div>

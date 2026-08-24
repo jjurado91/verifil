@@ -2,13 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { isAdminAuthenticated, getAdminName } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-function requireAdmin() {
-  return isAdminAuthenticated().then((authed) => {
-    if (!authed) throw new Error("Unauthorized");
-  });
+async function requireAdmin() {
+  const authed = await isAdminAuthenticated();
+  if (!authed) throw new Error("Unauthorized");
+  return getAdminName();
 }
 
 function numOrNull(value: FormDataEntryValue | null) {
@@ -18,7 +18,7 @@ function numOrNull(value: FormDataEntryValue | null) {
 }
 
 export async function createJob(formData: FormData) {
-  await requireAdmin();
+  const adminName = await requireAdmin();
 
   const { data, error } = await supabaseAdmin
     .from("jobs")
@@ -36,6 +36,8 @@ export async function createJob(formData: FormData) {
       openings: numOrNull(formData.get("openings")) ?? 1,
       status: (formData.get("status") as string) || "open",
       notes: (formData.get("notes") as string) || null,
+      added_by_name: adminName,
+      added_by_role: "admin",
     })
     .select("id")
     .single();
