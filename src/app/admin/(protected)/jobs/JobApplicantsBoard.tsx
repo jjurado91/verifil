@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,7 +8,7 @@ import {
   APPLICATION_STATUS_STYLES,
   type ApplicationStatus,
 } from "@/lib/applications";
-import { addApplicant, updateApplicantStatus, removeApplicant } from "./applications-actions";
+import { updateApplicantStatus, removeApplicant } from "./applications-actions";
 
 export type Applicant = {
   id: string;
@@ -22,32 +21,11 @@ export type Applicant = {
 export function JobApplicantsBoard({
   jobId,
   applicants,
-  availableCandidates,
 }: {
   jobId: string;
   applicants: Applicant[];
-  availableCandidates: { id: string; full_name: string }[];
 }) {
   const router = useRouter();
-  const [selectedCandidate, setSelectedCandidate] = useState("");
-  const [adding, setAdding] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleAdd(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedCandidate) return;
-    setAdding(true);
-    setError(null);
-    try {
-      await addApplicant(jobId, selectedCandidate);
-      setSelectedCandidate("");
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add.");
-    } finally {
-      setAdding(false);
-    }
-  }
 
   async function handleStatusChange(applicant: Applicant, status: ApplicationStatus) {
     await updateApplicantStatus(applicant.id, jobId, applicant.candidate_id, status);
@@ -62,39 +40,13 @@ export function JobApplicantsBoard({
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-          Candidates
-        </h2>
-      </div>
-
-      <form onSubmit={handleAdd} className="mt-3 flex items-center gap-2">
-        <select
-          value={selectedCandidate}
-          onChange={(e) => setSelectedCandidate(e.target.value)}
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
-        >
-          <option value="">Add a candidate…</option>
-          {availableCandidates.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.full_name}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          disabled={!selectedCandidate || adding}
-          className="shrink-0 rounded-full bg-brand-blue px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-blue-dark disabled:opacity-60"
-        >
-          {adding ? "Adding…" : "+ Add"}
-        </button>
-      </form>
-      {error && <p className="mt-1.5 text-sm text-brand-red">{error}</p>}
-      {availableCandidates.length === 0 && (
-        <p className="mt-1.5 text-xs text-slate-400">
-          All existing candidates are already in this job&apos;s pipeline.
-        </p>
-      )}
+      <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+        Pipeline
+      </h2>
+      <p className="mt-1 text-xs text-slate-400">
+        Add candidates from the table above — this board tracks where each
+        one stands.
+      </p>
 
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {APPLICATION_STATUSES.map((status) => (

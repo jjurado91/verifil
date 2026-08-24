@@ -13,10 +13,6 @@ export default async function AdminPage() {
       <h1 className="text-xl font-extrabold text-slate-900">
         CV Submissions
       </h1>
-      <p className="mt-1 text-sm text-slate-500">
-        Raw applications from the public landing page. Turn one into a full
-        candidate profile once you&apos;re ready to work it.
-      </p>
 
       {error && (
         <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-brand-red">

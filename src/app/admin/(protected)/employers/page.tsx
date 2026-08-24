@@ -10,10 +10,6 @@ export default async function EmployersPage() {
   return (
     <div>
       <h1 className="text-xl font-extrabold text-slate-900">Employers</h1>
-      <p className="mt-1 text-sm text-slate-500">
-        Employer accounts must be approved before they can post jobs
-        themselves.
-      </p>
 
       {error && (
         <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-brand-red">

@@ -89,10 +89,6 @@ export default async function JobsPage({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-extrabold text-slate-900">Jobs</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Openings ingested from agencies, hiring principals, and employer
-            self-service.
-          </p>
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <div className="flex rounded-full border border-slate-200 bg-white p-1">

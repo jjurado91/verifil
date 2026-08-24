@@ -50,6 +50,13 @@ export async function createCandidate(formData: FormData) {
   if (error || !data)
     throw new Error(error?.message ?? "Failed to create candidate");
 
+  // The submission has been turned into a full profile — remove it from
+  // the CV Submissions queue. The candidate row already has its own copy
+  // of cv_file_path, so the storage object stays untouched.
+  if (submissionId) {
+    await supabaseAdmin.from("cv_submissions").delete().eq("id", submissionId);
+  }
+
   revalidatePath("/admin/candidates");
   revalidatePath("/admin");
   redirect(`/admin/candidates/${data.id}`);

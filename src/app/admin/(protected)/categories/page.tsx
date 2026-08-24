@@ -11,12 +11,6 @@ export default async function CategoriesPage() {
   return (
     <div className="max-w-xl">
       <h1 className="text-xl font-extrabold text-slate-900">Job Categories</h1>
-      <p className="mt-1 text-sm text-slate-500">
-        These populate every category dropdown across the site — the
-        applicant CV form, admin job/candidate forms, and the employer
-        portal. Editing or removing a category doesn&apos;t change the value
-        already saved on existing jobs or candidates.
-      </p>
 
       <div className="mt-6">
         <AddCategoryForm />
