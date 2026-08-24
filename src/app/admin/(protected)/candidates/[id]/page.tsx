@@ -98,12 +98,20 @@ export default async function CandidateDetailPage({
               : "Experience unknown"}
           </p>
         </div>
-        <a
-          href={`/admin/candidates/${id}/download`}
-          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
-        >
-          Download CV ({candidate.cv_file_name})
-        </a>
+        <div className="flex shrink-0 items-center gap-3">
+          <Link
+            href={`/admin/candidates/${id}/endorsement`}
+            className="rounded-full bg-brand-blue px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-blue-dark"
+          >
+            View Endorsement
+          </Link>
+          <a
+            href={`/admin/candidates/${id}/download`}
+            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
+          >
+            Download CV ({candidate.cv_file_name})
+          </a>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[2fr_1fr]">
