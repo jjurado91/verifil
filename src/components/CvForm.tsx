@@ -35,9 +35,14 @@ export function CvForm() {
 
     const form = event.currentTarget;
     const data = new FormData(form);
-    const cvFile = data.get("cv") as File;
+    const cvFile = data.get("cv") as File | null;
 
-    if (cvFile && cvFile.size > MAX_FILE_BYTES) {
+    if (!cvFile || cvFile.size === 0) {
+      setError("Please choose a file to upload.");
+      return;
+    }
+
+    if (cvFile.size > MAX_FILE_BYTES) {
       setError("That file is over 10MB. Please upload a smaller file.");
       return;
     }
@@ -74,8 +79,14 @@ export function CvForm() {
       setSubmitted(true);
     } catch (err) {
       console.error("Verifil CV submission failed:", err);
+      const detail =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message: unknown }).message)
+          : null;
       setError(
-        "Something went wrong submitting your CV. Please try again in a moment.",
+        `Something went wrong submitting your CV. Please try again in a moment.${
+          detail ? ` (${detail})` : ""
+        }`,
       );
     } finally {
       setSubmitting(false);
