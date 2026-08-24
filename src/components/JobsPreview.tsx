@@ -55,12 +55,7 @@ export function JobsPreview() {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-slate-500">
-          Don&apos;t see your trade listed? Submit your CV anyway — new roles
-          open every week and we&apos;ll match you as soon as one fits.
-        </p>
-
-        <div className="mx-auto mt-8 flex max-w-xl flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-brand-offwhite px-6 py-6 text-center sm:flex-row sm:justify-between sm:text-left">
+        <div className="mx-auto mt-8 flex max-w-4xl flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-brand-offwhite px-6 py-6 text-center sm:flex-row sm:justify-between sm:text-left">
           <p className="text-sm font-semibold text-slate-700">
             Looking to hire instead? Get verified Filipino talent for your
             team.
