@@ -129,8 +129,8 @@ export default function EmployerSignupPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Phone (optional)</label>
-                  <input name="phone" className={inputClass} />
+                  <label className={labelClass}>Phone</label>
+                  <input name="phone" type="tel" required className={inputClass} />
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">

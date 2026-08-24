@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { SubmissionRowActions } from "./SubmissionRowActions";
 
 export default async function AdminPage() {
   const { data: submissions, error } = await supabaseAdmin
@@ -66,12 +67,11 @@ export default async function AdminPage() {
                     {row.preferred_country ?? "—"}
                   </td>
                   <td className="px-4 py-3">
-                    <a
-                      href={`/admin/download/${row.id}`}
-                      className="font-semibold text-brand-blue hover:underline"
-                    >
-                      Download
-                    </a>
+                    <SubmissionRowActions
+                      id={row.id}
+                      fileName={row.cv_file_name}
+                      applicantName={row.full_name}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     {candidateId ? (
