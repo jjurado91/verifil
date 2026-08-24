@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { jobListings } from "@/lib/data";
 
 export function JobsPreview() {
@@ -58,6 +59,19 @@ export function JobsPreview() {
           Don&apos;t see your trade listed? Submit your CV anyway — new roles
           open every week and we&apos;ll match you as soon as one fits.
         </p>
+
+        <div className="mx-auto mt-8 flex max-w-xl flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-brand-offwhite px-6 py-6 text-center sm:flex-row sm:justify-between sm:text-left">
+          <p className="text-sm font-semibold text-slate-700">
+            Looking to hire instead? Get verified Filipino talent for your
+            team.
+          </p>
+          <Link
+            href="/employers"
+            className="shrink-0 rounded-full bg-brand-red px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:brightness-95"
+          >
+            Hire from the Philippines Now
+          </Link>
+        </div>
       </div>
     </section>
   );

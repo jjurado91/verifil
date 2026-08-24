@@ -28,12 +28,20 @@ export function Header() {
           </a>
         </nav>
 
-        <a
-          href="#apply"
-          className="rounded-full bg-brand-blue px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-blue-dark sm:px-5"
-        >
-          Submit Your CV
-        </a>
+        <div className="flex items-center gap-4 sm:gap-5">
+          <Link
+            href="/employers"
+            className="hidden text-sm font-semibold text-slate-600 hover:text-brand-blue sm:inline"
+          >
+            Employer Portal
+          </Link>
+          <a
+            href="#apply"
+            className="rounded-full bg-brand-blue px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-blue-dark sm:px-5"
+          >
+            Submit Your CV
+          </a>
+        </div>
       </div>
     </header>
   );
