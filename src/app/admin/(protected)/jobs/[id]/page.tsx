@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { computeFitScore } from "@/lib/matching";
 import { JobForm } from "../JobForm";
 import { updateJob } from "../actions";
+import { getCategories } from "@/lib/categories";
 
 export default async function JobDetailPage({
   params,
@@ -12,11 +13,12 @@ export default async function JobDetailPage({
 }) {
   const { id } = await params;
 
-  const [{ data: job }, { data: candidates }] = await Promise.all([
+  const [{ data: job }, { data: candidates }, categories] = await Promise.all([
     supabaseAdmin.from("jobs").select("*").eq("id", id).single(),
     supabaseAdmin
       .from("candidates")
       .select("id, full_name, trade, preferred_country, experience_years, status"),
+    getCategories(),
   ]);
 
   if (!job) notFound();
@@ -47,7 +49,11 @@ export default async function JobDetailPage({
       </p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <JobForm initial={job} action={updateJob.bind(null, id)} />
+        <JobForm
+          initial={job}
+          action={updateJob.bind(null, id)}
+          categories={categories}
+        />
 
         <div>
           <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">

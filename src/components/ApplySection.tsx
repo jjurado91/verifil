@@ -1,6 +1,6 @@
 import { CvForm } from "@/components/CvForm";
 
-export function ApplySection() {
+export function ApplySection({ categories }: { categories: string[] }) {
   return (
     <section id="apply" className="bg-brand-blue py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -13,7 +13,7 @@ export function ApplySection() {
             completely free — always.
           </p>
         </div>
-        <CvForm />
+        <CvForm categories={categories} />
       </div>
     </section>
   );

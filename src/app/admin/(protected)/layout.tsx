@@ -15,6 +15,7 @@ const navLinks = [
   { href: "/admin", label: "Submissions" },
   { href: "/admin/candidates", label: "Candidates" },
   { href: "/admin/jobs", label: "Jobs" },
+  { href: "/admin/categories", label: "Job Categories" },
 ];
 
 export default async function AdminLayout({

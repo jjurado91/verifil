@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { CATEGORIES, COUNTRIES } from "@/lib/taxonomy";
+import { CountryOptions } from "@/components/CountryOptions";
 
 export type EmployerJobFormValues = {
   id?: string;
@@ -26,9 +26,11 @@ const labelClass = "mb-1.5 block text-sm font-bold text-slate-700";
 export function EmployerJobForm({
   initial,
   action,
+  categories,
 }: {
   initial?: EmployerJobFormValues;
   action: (formData: FormData) => Promise<void>;
+  categories: string[];
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -77,11 +79,7 @@ export function EmployerJobForm({
             <option value="" disabled>
               Select country
             </option>
-            {COUNTRIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
+            <CountryOptions />
           </select>
         </div>
         <div>
@@ -95,7 +93,7 @@ export function EmployerJobForm({
             <option value="" disabled>
               Select category
             </option>
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>

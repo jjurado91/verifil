@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { CATEGORIES, COUNTRIES } from "@/lib/taxonomy";
+import { CountryOptions } from "@/components/CountryOptions";
+import { getCategories } from "@/lib/categories";
 
 const statusStyles: Record<string, string> = {
   open: "bg-green-100 text-green-700",
@@ -55,7 +56,10 @@ export default async function JobsPage({
   if (countryFilter) query = query.eq("country", countryFilter);
   if (categoryFilter) query = query.eq("category", categoryFilter);
 
-  const { data: jobs, error } = await query;
+  const [{ data: jobs, error }, categories] = await Promise.all([
+    query,
+    getCategories(),
+  ]);
 
   const hasFilters =
     statusFilter.length > 0 ||
@@ -151,11 +155,7 @@ export default async function JobsPage({
               className="mt-2 w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
             >
               <option value="">All countries</option>
-              {COUNTRIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
+              <CountryOptions />
             </select>
           </div>
 
@@ -169,7 +169,7 @@ export default async function JobsPage({
               className="mt-2 w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
             >
               <option value="">All categories</option>
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>

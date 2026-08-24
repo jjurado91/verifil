@@ -1,7 +1,10 @@
 import { EmployerJobForm } from "../../EmployerJobForm";
 import { createEmployerJob } from "../../actions";
+import { getCategories } from "@/lib/categories";
 
-export default function NewEmployerJobPage() {
+export default async function NewEmployerJobPage() {
+  const categories = await getCategories();
+
   return (
     <div>
       <h1 className="text-xl font-extrabold text-slate-900">Post a Job</h1>
@@ -9,7 +12,7 @@ export default function NewEmployerJobPage() {
         This listing will appear under your company on Verifil.
       </p>
       <div className="mt-4">
-        <EmployerJobForm action={createEmployerJob} />
+        <EmployerJobForm action={createEmployerJob} categories={categories} />
       </div>
     </div>
   );

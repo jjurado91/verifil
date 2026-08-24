@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { computeFitScore } from "@/lib/matching";
 import { CandidateForm } from "../CandidateForm";
 import { updateCandidate } from "../actions";
+import { getCategories } from "@/lib/categories";
 
 export default async function CandidateDetailPage({
   params,
@@ -12,11 +13,12 @@ export default async function CandidateDetailPage({
 }) {
   const { id } = await params;
 
-  const [{ data: candidate }, { data: jobs }] = await Promise.all([
+  const [{ data: candidate }, { data: jobs }, categories] = await Promise.all([
     supabaseAdmin.from("candidates").select("*").eq("id", id).single(),
     supabaseAdmin
       .from("jobs")
       .select("id, role_title, agency_name, country, category, subcategory, status"),
+    getCategories(),
   ]);
 
   if (!candidate) notFound();
@@ -61,6 +63,7 @@ export default async function CandidateDetailPage({
           initial={candidate}
           action={updateCandidate.bind(null, id)}
           showScoring
+          categories={categories}
         />
 
         <div>

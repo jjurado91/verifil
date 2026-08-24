@@ -2,12 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { CATEGORIES, COUNTRIES as COUNTRY_LIST } from "@/lib/taxonomy";
+import { CountryOptions } from "@/components/CountryOptions";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
-
-const TRADES = CATEGORIES;
-const COUNTRIES = ["No preference", ...COUNTRY_LIST];
 
 // Real resume filenames are messy — slashes, unicode, excessive length —
 // and this name becomes part of the storage object key, so sanitize it.
@@ -23,7 +20,7 @@ function sanitizeFileName(name: string) {
   return ext ? `${base || "resume"}.${ext}` : base || "resume";
 }
 
-export function CvForm() {
+export function CvForm({ categories }: { categories: string[] }) {
   const [submitted, setSubmitted] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -197,7 +194,7 @@ export function CvForm() {
               <option value="" disabled>
                 Select your trade
               </option>
-              {TRADES.map((trade) => (
+              {categories.map((trade) => (
                 <option key={trade} value={trade}>
                   {trade}
                 </option>
@@ -234,14 +231,11 @@ export function CvForm() {
           <select
             id="country"
             name="country"
-            defaultValue={COUNTRIES[0]}
+            defaultValue="No preference"
             className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
           >
-            {COUNTRIES.map((country) => (
-              <option key={country} value={country}>
-                {country}
-              </option>
-            ))}
+            <option value="No preference">No preference</option>
+            <CountryOptions />
           </select>
         </div>
 

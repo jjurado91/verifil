@@ -1,7 +1,10 @@
 import { JobForm } from "../JobForm";
 import { createJob } from "../actions";
+import { getCategories } from "@/lib/categories";
 
-export default function NewJobPage() {
+export default async function NewJobPage() {
+  const categories = await getCategories();
+
   return (
     <div>
       <h1 className="text-xl font-extrabold text-slate-900">Add Job</h1>
@@ -10,7 +13,7 @@ export default function NewJobPage() {
         principal.
       </p>
       <div className="mt-4">
-        <JobForm action={createJob} />
+        <JobForm action={createJob} categories={categories} />
       </div>
     </div>
   );

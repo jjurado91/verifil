@@ -7,8 +7,11 @@ import { Gallery } from "@/components/Gallery";
 import { Testimonials } from "@/components/Testimonials";
 import { ApplySection } from "@/components/ApplySection";
 import { Footer } from "@/components/Footer";
+import { getCategories } from "@/lib/categories";
 
-export default function Home() {
+export default async function Home() {
+  const categories = await getCategories();
+
   return (
     <>
       <Header />
@@ -19,7 +22,7 @@ export default function Home() {
         <HowItWorks />
         <Gallery />
         <Testimonials />
-        <ApplySection />
+        <ApplySection categories={categories} />
       </main>
       <Footer />
     </>

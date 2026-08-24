@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EmployerJobForm } from "../../EmployerJobForm";
 import { updateEmployerJob, deleteEmployerJob } from "../../actions";
 import { DeleteJobButton } from "./DeleteJobButton";
+import { getCategories } from "@/lib/categories";
 
 export default async function EmployerJobDetailPage({
   params,
@@ -13,11 +14,10 @@ export default async function EmployerJobDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [{ data: job }, categories] = await Promise.all([
+    supabase.from("jobs").select("*").eq("id", id).single(),
+    getCategories(),
+  ]);
 
   if (!job) notFound();
 
@@ -38,6 +38,7 @@ export default async function EmployerJobDetailPage({
         <EmployerJobForm
           initial={job}
           action={updateEmployerJob.bind(null, id)}
+          categories={categories}
         />
       </div>
 

@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { CATEGORIES, COUNTRIES } from "@/lib/taxonomy";
+import { CountryOptions } from "@/components/CountryOptions";
 
 export type CandidateFormValues = {
   id?: string;
@@ -32,10 +32,12 @@ export function CandidateForm({
   initial,
   action,
   showScoring = false,
+  categories,
 }: {
   initial?: CandidateFormValues;
   action: (formData: FormData) => Promise<void>;
   showScoring?: boolean;
+  categories: string[];
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -168,7 +170,7 @@ export function CandidateForm({
             className={inputClass}
           >
             <option value="">Select trade</option>
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -196,11 +198,7 @@ export function CandidateForm({
           className={inputClass}
         >
           <option value="">No preference</option>
-          {COUNTRIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
+          <CountryOptions />
         </select>
       </div>
 

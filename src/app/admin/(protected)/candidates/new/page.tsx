@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { CandidateForm } from "../CandidateForm";
 import { createCandidate } from "../actions";
+import { getCategories } from "@/lib/categories";
 
 export default async function NewCandidatePage({
   searchParams,
@@ -11,11 +12,10 @@ export default async function NewCandidatePage({
   const { from } = await searchParams;
   if (!from) notFound();
 
-  const { data: submission } = await supabaseAdmin
-    .from("cv_submissions")
-    .select("*")
-    .eq("id", from)
-    .single();
+  const [{ data: submission }, categories] = await Promise.all([
+    supabaseAdmin.from("cv_submissions").select("*").eq("id", from).single(),
+    getCategories(),
+  ]);
 
   if (!submission) notFound();
 
@@ -45,6 +45,7 @@ export default async function NewCandidatePage({
             cv_file_name: submission.cv_file_name,
           }}
           action={createCandidate}
+          categories={categories}
         />
       </div>
     </div>
