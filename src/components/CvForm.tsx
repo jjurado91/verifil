@@ -9,6 +9,20 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const TRADES = CATEGORIES;
 const COUNTRIES = ["No preference", ...COUNTRY_LIST];
 
+// Real resume filenames are messy — slashes, unicode, excessive length —
+// and this name becomes part of the storage object key, so sanitize it.
+function sanitizeFileName(name: string) {
+  const lastDot = name.lastIndexOf(".");
+  const ext = lastDot > -1 ? name.slice(lastDot + 1).replace(/[^a-zA-Z0-9]/g, "").slice(0, 10) : "";
+  const base = (lastDot > -1 ? name.slice(0, lastDot) : name)
+    .normalize("NFKD")
+    .replace(/[^a-zA-Z0-9-_ ]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+  return ext ? `${base || "resume"}.${ext}` : base || "resume";
+}
+
 export function CvForm() {
   const [submitted, setSubmitted] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -31,11 +45,14 @@ export function CvForm() {
     setSubmitting(true);
     try {
       const supabase = createClient();
-      const filePath = `${crypto.randomUUID()}-${cvFile.name}`;
+      const filePath = `${crypto.randomUUID()}-${sanitizeFileName(cvFile.name)}`;
       const { error: uploadError } = await supabase.storage
         .from("resumes")
         .upload(filePath, cvFile);
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Verifil CV upload failed:", uploadError);
+        throw uploadError;
+      }
 
       const { error: insertError } = await supabase
         .from("cv_submissions")
@@ -49,10 +66,14 @@ export function CvForm() {
           cv_file_path: filePath,
           cv_file_name: cvFile.name,
         });
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Verifil CV submission insert failed:", insertError);
+        throw insertError;
+      }
 
       setSubmitted(true);
-    } catch {
+    } catch (err) {
+      console.error("Verifil CV submission failed:", err);
       setError(
         "Something went wrong submitting your CV. Please try again in a moment.",
       );
