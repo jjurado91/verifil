@@ -43,6 +43,7 @@ export async function createCandidate(formData: FormData) {
       cv_file_path: formData.get("cv_file_path") as string,
       cv_file_name: formData.get("cv_file_name") as string,
       status: (formData.get("status") as string) || "new",
+      assigned_admin_name: strOrNull(formData.get("assigned_admin_name")),
     })
     .select("id")
     .single();
@@ -81,6 +82,7 @@ export async function updateCandidate(id: string, formData: FormData) {
       score: numOrNull(formData.get("score")),
       score_notes: strOrNull(formData.get("score_notes")),
       status: (formData.get("status") as string) || "new",
+      assigned_admin_name: strOrNull(formData.get("assigned_admin_name")),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);

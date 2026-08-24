@@ -96,6 +96,7 @@ export default async function CandidatesPage({
                   <th className="px-4 py-3">Score</th>
                   <th className="px-4 py-3">Pipeline</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Assigned</th>
                   <th className="px-4 py-3">CV</th>
                 </tr>
               </thead>
@@ -140,6 +141,11 @@ export default async function CandidatesPage({
                         >
                           {c.status}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {c.assigned_admin_name ?? (
+                          <span className="text-slate-300">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <a

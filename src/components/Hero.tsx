@@ -20,7 +20,7 @@ export function Hero() {
       <div className="relative mx-auto flex max-w-6xl flex-col px-4 pt-14 pb-16 sm:px-6 sm:pt-20 sm:pb-24">
         <h1 className="mt-2 max-w-xl text-3xl font-extrabold leading-tight text-white sm:text-5xl">
           Your <span className="text-brand-gold">trusted platform</span> for
-          Filipino talent recruitment.
+          work abroad
         </h1>
 
         <p className="mt-4 max-w-lg text-base text-slate-200 sm:text-lg">

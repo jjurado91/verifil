@@ -5,12 +5,10 @@ import { computeFitScore } from "@/lib/matching";
 import { CandidateForm } from "../CandidateForm";
 import { updateCandidate } from "../actions";
 import { getCategories } from "@/lib/categories";
-import {
-  APPLICATION_STATUS_LABELS,
-  APPLICATION_STATUS_STYLES,
-  type ApplicationStatus,
-} from "@/lib/applications";
-import { CandidateNotes } from "../CandidateNotes";
+import { getAdminNames } from "@/lib/admins";
+import { CandidateTimeline, type TimelineItem } from "../CandidateTimeline";
+import { CandidateDocuments } from "../CandidateDocuments";
+import type { ApplicationStatus } from "@/lib/applications";
 
 export default async function CandidateDetailPage({
   params,
@@ -19,24 +17,35 @@ export default async function CandidateDetailPage({
 }) {
   const { id } = await params;
 
-  const [{ data: candidate }, { data: jobs }, categories, { data: pipeline }, { data: notes }] =
-    await Promise.all([
-      supabaseAdmin.from("candidates").select("*").eq("id", id).single(),
-      supabaseAdmin
-        .from("jobs")
-        .select("id, role_title, agency_name, country, category, subcategory, status"),
-      getCategories(),
-      supabaseAdmin
-        .from("job_applications")
-        .select("id, status, jobs(id, role_title, agency_name, country)")
-        .eq("candidate_id", id)
-        .order("updated_at", { ascending: false }),
-      supabaseAdmin
-        .from("candidate_notes")
-        .select("id, body, author_name, created_at")
-        .eq("candidate_id", id)
-        .order("created_at", { ascending: false }),
-    ]);
+  const [
+    { data: candidate },
+    { data: jobs },
+    categories,
+    admins,
+    { data: pipeline },
+    { data: notes },
+    { data: documents },
+  ] = await Promise.all([
+    supabaseAdmin.from("candidates").select("*").eq("id", id).single(),
+    supabaseAdmin
+      .from("jobs")
+      .select("id, role_title, agency_name, country, category, subcategory, status"),
+    getCategories(),
+    getAdminNames(),
+    supabaseAdmin
+      .from("job_applications")
+      .select("id, job_id, status, updated_at, jobs(role_title)")
+      .eq("candidate_id", id),
+    supabaseAdmin
+      .from("candidate_notes")
+      .select("id, body, author_name, created_at")
+      .eq("candidate_id", id),
+    supabaseAdmin
+      .from("candidate_documents")
+      .select("id, doc_type, file_name, uploaded_at")
+      .eq("candidate_id", id)
+      .order("uploaded_at", { ascending: false }),
+  ]);
 
   if (!candidate) notFound();
 
@@ -45,6 +54,28 @@ export default async function CandidateDetailPage({
     .filter((m) => m.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 15);
+
+  const timelineItems: TimelineItem[] = [
+    { kind: "created", id: `created-${candidate.id}`, date: candidate.created_at },
+    ...(notes ?? []).map((n) => ({
+      kind: "note" as const,
+      id: n.id,
+      date: n.created_at,
+      body: n.body,
+      author: n.author_name,
+    })),
+    ...(pipeline ?? []).map((p) => {
+      const job = p.jobs as unknown as { role_title: string } | null;
+      return {
+        kind: "pipeline" as const,
+        id: p.id,
+        date: p.updated_at,
+        jobId: p.job_id,
+        roleTitle: job?.role_title ?? "Unknown role",
+        status: p.status as ApplicationStatus,
+      };
+    }),
+  ];
 
   return (
     <div>
@@ -81,6 +112,7 @@ export default async function CandidateDetailPage({
           action={updateCandidate.bind(null, id)}
           showScoring
           categories={categories}
+          admins={admins}
         />
 
         <div>
@@ -119,53 +151,12 @@ export default async function CandidateDetailPage({
         </div>
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-          Job Pipeline
-        </h2>
-        <div className="mt-3 flex flex-col gap-2">
-          {(pipeline ?? []).map((entry) => {
-            const job = entry.jobs as unknown as {
-              id: string;
-              role_title: string;
-              agency_name: string;
-              country: string;
-            } | null;
-            const status = entry.status as ApplicationStatus;
-            if (!job) return null;
-            return (
-              <Link
-                key={entry.id}
-                href={`/admin/jobs/${job.id}`}
-                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 transition hover:border-brand-blue hover:shadow-sm"
-              >
-                <div>
-                  <span className="text-sm font-semibold text-slate-900">
-                    {job.role_title}
-                  </span>
-                  <p className="text-xs text-slate-400">
-                    {job.agency_name} · {job.country}
-                  </p>
-                </div>
-                <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${APPLICATION_STATUS_STYLES[status]}`}
-                >
-                  {APPLICATION_STATUS_LABELS[status]}
-                </span>
-              </Link>
-            );
-          })}
-          {(pipeline ?? []).length === 0 && (
-            <p className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">
-              Not in any job&apos;s pipeline yet. Add them from a job&apos;s
-              Candidates board.
-            </p>
-          )}
-        </div>
+      <div className="mt-8 max-w-2xl">
+        <CandidateDocuments candidateId={id} documents={documents ?? []} />
       </div>
 
       <div className="mt-8 max-w-2xl">
-        <CandidateNotes candidateId={id} notes={notes ?? []} />
+        <CandidateTimeline candidateId={id} items={timelineItems} />
       </div>
     </div>
   );

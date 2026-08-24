@@ -22,6 +22,7 @@ export type CandidateFormValues = {
   score?: number | null;
   score_notes?: string | null;
   status?: string;
+  assigned_admin_name?: string | null;
 };
 
 const inputClass =
@@ -33,11 +34,13 @@ export function CandidateForm({
   action,
   showScoring = false,
   categories,
+  admins,
 }: {
   initial?: CandidateFormValues;
   action: (formData: FormData) => Promise<void>;
   showScoring?: boolean;
   categories: string[];
+  admins: string[];
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -202,20 +205,37 @@ export function CandidateForm({
         </select>
       </div>
 
-      <div>
-        <label className={labelClass}>Status</label>
-        <select
-          name="status"
-          defaultValue={initial?.status ?? "new"}
-          className={inputClass}
-        >
-          <option value="new">New</option>
-          <option value="screening">Screening</option>
-          <option value="verified">Verified</option>
-          <option value="matched">Matched</option>
-          <option value="deployed">Deployed</option>
-          <option value="rejected">Rejected</option>
-        </select>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className={labelClass}>Status</label>
+          <select
+            name="status"
+            defaultValue={initial?.status ?? "new"}
+            className={inputClass}
+          >
+            <option value="new">New</option>
+            <option value="screening">Screening</option>
+            <option value="verified">Verified</option>
+            <option value="matched">Matched</option>
+            <option value="deployed">Deployed</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Assigned to</label>
+          <select
+            name="assigned_admin_name"
+            defaultValue={initial?.assigned_admin_name ?? ""}
+            className={inputClass}
+          >
+            <option value="">Unassigned</option>
+            {admins.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {showScoring && (
