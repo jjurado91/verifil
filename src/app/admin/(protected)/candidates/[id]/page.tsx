@@ -10,6 +10,7 @@ import {
   APPLICATION_STATUS_STYLES,
   type ApplicationStatus,
 } from "@/lib/applications";
+import { CandidateNotes } from "../CandidateNotes";
 
 export default async function CandidateDetailPage({
   params,
@@ -18,7 +19,7 @@ export default async function CandidateDetailPage({
 }) {
   const { id } = await params;
 
-  const [{ data: candidate }, { data: jobs }, categories, { data: pipeline }] =
+  const [{ data: candidate }, { data: jobs }, categories, { data: pipeline }, { data: notes }] =
     await Promise.all([
       supabaseAdmin.from("candidates").select("*").eq("id", id).single(),
       supabaseAdmin
@@ -30,6 +31,11 @@ export default async function CandidateDetailPage({
         .select("id, status, jobs(id, role_title, agency_name, country)")
         .eq("candidate_id", id)
         .order("updated_at", { ascending: false }),
+      supabaseAdmin
+        .from("candidate_notes")
+        .select("id, body, author_name, created_at")
+        .eq("candidate_id", id)
+        .order("created_at", { ascending: false }),
     ]);
 
   if (!candidate) notFound();
@@ -156,6 +162,10 @@ export default async function CandidateDetailPage({
             </p>
           )}
         </div>
+      </div>
+
+      <div className="mt-8 max-w-2xl">
+        <CandidateNotes candidateId={id} notes={notes ?? []} />
       </div>
     </div>
   );
