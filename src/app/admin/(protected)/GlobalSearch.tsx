@@ -57,7 +57,7 @@ export function GlobalSearch() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => setOpen(true)}
-        placeholder="Search candidates, jobs, employers…"
+        placeholder="Search"
         className="w-full rounded-full border border-slate-300 bg-slate-50 px-4 py-1.5 text-sm outline-none focus:border-brand-blue focus:bg-white focus:ring-2 focus:ring-brand-blue/20"
       />
 

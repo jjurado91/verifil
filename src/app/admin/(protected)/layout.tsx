@@ -6,6 +6,7 @@ import { isAdminAuthenticated, getAdminName, isSuperAdmin } from "@/lib/admin-au
 import { logout } from "../actions";
 import { AdminNav } from "./AdminNav";
 import { GlobalSearch } from "./GlobalSearch";
+import { ProfileMenu } from "./ProfileMenu";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -44,17 +45,7 @@ export default async function AdminLayout({
           </div>
           <div className="hidden items-center gap-3 md:flex">
             <GlobalSearch />
-            <span className="text-sm font-semibold text-slate-500">
-              {adminName}
-            </span>
-            <form action={logout}>
-              <button
-                type="submit"
-                className="rounded-full border border-slate-300 px-4 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
-              >
-                Log out
-              </button>
-            </form>
+            <ProfileMenu adminName={adminName} logout={logout} />
           </div>
         </div>
         <div className="border-t border-slate-100 px-4 py-2.5 sm:px-6 md:hidden">

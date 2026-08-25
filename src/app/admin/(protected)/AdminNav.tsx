@@ -48,6 +48,7 @@ function DesktopDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -57,8 +58,25 @@ function DesktopDropdown({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
+  function cancelClose() {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }
+
+  function scheduleClose() {
+    cancelClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  }
+
   return (
-    <div ref={ref} className="relative">
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => {
+        cancelClose();
+        setOpen(true);
+      }}
+      onMouseLeave={scheduleClose}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
