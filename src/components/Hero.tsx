@@ -1,7 +1,13 @@
 import Image from "next/image";
-import { trustStats } from "@/lib/data";
+import type { HomepageContent } from "@/lib/site-content";
 
-export function Hero() {
+export function Hero({
+  content,
+  trustStats,
+}: {
+  content: HomepageContent["hero"];
+  trustStats: HomepageContent["trustStats"];
+}) {
   return (
     <section id="top" className="relative overflow-hidden bg-slate-900">
       <div className="absolute inset-0">
@@ -19,13 +25,13 @@ export function Hero() {
 
       <div className="relative mx-auto flex max-w-6xl flex-col px-4 pt-14 pb-16 sm:px-6 sm:pt-20 sm:pb-24">
         <h1 className="mt-2 max-w-xl text-3xl font-extrabold leading-tight text-white sm:text-5xl">
-          Your <span className="text-brand-gold">trusted platform</span> for
-          work abroad
+          {content.headlinePrefix}{" "}
+          <span className="text-brand-gold">{content.headlineHighlight}</span>{" "}
+          {content.headlineSuffix}
         </h1>
 
         <p className="mt-4 max-w-lg text-base text-slate-200 sm:text-lg">
-          Submit your CV in minutes and get matched with verified employers
-          overseas — no illegal recruiters, no hidden fees, no guesswork.
+          {content.subheadline}
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -33,13 +39,13 @@ export function Hero() {
             href="#apply"
             className="rounded-full bg-brand-gold px-7 py-3.5 text-center text-base font-bold text-slate-900 shadow-lg shadow-black/20 transition hover:brightness-95"
           >
-            Submit Your CV — It&apos;s Free
+            {content.primaryCtaLabel}
           </a>
           <a
             href="#jobs"
             className="rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-center text-base font-bold text-white backdrop-blur transition hover:bg-white/20"
           >
-            See Open Jobs
+            {content.secondaryCtaLabel}
           </a>
         </div>
 

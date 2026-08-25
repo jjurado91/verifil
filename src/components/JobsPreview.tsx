@@ -1,22 +1,19 @@
 import Link from "next/link";
 import { jobListings } from "@/lib/data";
+import type { HomepageContent } from "@/lib/site-content";
 
-export function JobsPreview() {
+export function JobsPreview({ content }: { content: HomepageContent["jobsPreview"] }) {
   return (
     <section id="jobs" className="bg-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-bold uppercase tracking-wide text-brand-red">
-            Open Opportunities
+            {content.eyebrow}
           </span>
           <h2 className="mt-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">
-            Roles hiring right now
+            {content.heading}
           </h2>
-          <p className="mt-3 text-slate-600">
-            Employer details are kept private until you&apos;re matched — this
-            protects you from fake job postings. What you see below is real:
-            the role, the country, and the pay.
-          </p>
+          <p className="mt-3 text-slate-600">{content.subtext}</p>
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -57,14 +54,13 @@ export function JobsPreview() {
 
         <div className="mx-auto mt-8 flex max-w-4xl flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-brand-offwhite px-6 py-6 text-center sm:flex-row sm:justify-between sm:text-left">
           <p className="text-sm font-semibold text-slate-700">
-            Looking to hire instead? Get verified Filipino talent for your
-            team.
+            {content.hireCalloutText}
           </p>
           <Link
             href="/employers"
             className="shrink-0 rounded-full bg-brand-red px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:brightness-95"
           >
-            Hire from the Philippines Now
+            {content.hireCalloutButtonLabel}
           </Link>
         </div>
       </div>

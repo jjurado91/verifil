@@ -22,7 +22,7 @@ export const getAdminProfile = cache(async () => {
 
   const { data: profile } = await supabase
     .from("admin_profiles")
-    .select("name, email")
+    .select("name, email, is_superadmin")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -36,4 +36,9 @@ export async function isAdminAuthenticated() {
 export async function getAdminName() {
   const profile = await getAdminProfile();
   return profile?.name ?? "Admin";
+}
+
+export async function isSuperAdmin() {
+  const profile = await getAdminProfile();
+  return Boolean(profile?.is_superadmin);
 }

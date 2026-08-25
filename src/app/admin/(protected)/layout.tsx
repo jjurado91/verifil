@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { isAdminAuthenticated, getAdminName } from "@/lib/admin-auth";
+import { isAdminAuthenticated, getAdminName, isSuperAdmin } from "@/lib/admin-auth";
 import { logout } from "../actions";
 import { AdminNav } from "./AdminNav";
 import { GlobalSearch } from "./GlobalSearch";
@@ -21,7 +21,10 @@ export default async function AdminLayout({
   const authed = await isAdminAuthenticated();
   if (!authed) redirect("/admin/login");
 
-  const adminName = await getAdminName();
+  const [adminName, superAdmin] = await Promise.all([
+    getAdminName(),
+    isSuperAdmin(),
+  ]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -37,7 +40,7 @@ export default async function AdminLayout({
                 className="h-7 w-auto"
               />
             </Link>
-            <AdminNav adminName={adminName} logout={logout} />
+            <AdminNav adminName={adminName} logout={logout} isSuperAdmin={superAdmin} />
           </div>
           <div className="hidden items-center gap-3 md:flex">
             <GlobalSearch />

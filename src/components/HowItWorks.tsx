@@ -1,4 +1,4 @@
-import { processSteps } from "@/lib/data";
+import type { HomepageContent } from "@/lib/site-content";
 
 const stepIcons: Record<string, React.ReactNode> = {
   "1": (
@@ -81,21 +81,22 @@ function StepArrow() {
   );
 }
 
-export function HowItWorks() {
+export function HowItWorks({ content }: { content: HomepageContent["howItWorks"] }) {
+  const { eyebrow, heading, steps } = content;
   return (
     <section id="how-it-works" className="bg-brand-offwhite py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-bold uppercase tracking-wide text-brand-red">
-            How It Works
+            {eyebrow}
           </span>
           <h2 className="mt-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">
-            From CV to deployment, fully tracked
+            {heading}
           </h2>
         </div>
 
         <div className="mt-12 flex flex-col items-center gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-2">
-          {processSteps.map((step, index) => (
+          {steps.map((step, index) => (
             <div key={step.step} className="contents">
               <div className="flex w-full max-w-xs flex-col items-center text-center lg:max-w-[13rem]">
                 <div
@@ -120,7 +121,7 @@ export function HowItWorks() {
                 </p>
               </div>
 
-              {index < processSteps.length - 1 && <StepArrow />}
+              {index < steps.length - 1 && <StepArrow />}
             </div>
           ))}
         </div>

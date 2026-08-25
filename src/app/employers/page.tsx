@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { getSiteSettings } from "@/lib/site-settings";
 
 export const metadata: Metadata = {
   title: "Employer Portal | Verifil",
@@ -32,7 +33,8 @@ const benefits = [
   },
 ];
 
-export default function EmployersPage() {
+export default async function EmployersPage() {
+  const settings = await getSiteSettings();
   return (
     <>
       <Header />
@@ -113,7 +115,7 @@ export default function EmployersPage() {
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer settings={settings} />
     </>
   );
 }
