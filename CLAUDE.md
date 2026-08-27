@@ -28,6 +28,13 @@ https://verifiljobs.com.
    entirely. Every server action re-checks `isAdminAuthenticated()`
    independently of the layout gate, since Next.js server actions are
    directly invokable and don't inherit a page's auth check.
+   - **Superadmin** is a second flag layered on top: `admin_profiles.is_superadmin`.
+     Every admin can use the CRM; only superadmins see the "Superadmin" nav
+     group and can access `/admin/superadmin/*` (Settings, SEO, Edit
+     Homepage). Each superadmin page independently calls `isSuperAdmin()`
+     and redirects to `/admin/dashboard` if false — same "re-check, don't
+     trust the nav" pattern as `isAdminAuthenticated()`. Currently only
+     `jjurado91@gmail.com` has the flag.
 3. **Employer portal** (`/employers/portal/*`) — Supabase Auth, gated by
    `employer_profiles.status = 'approved'` (new signups start `pending`).
    Uses the **request-scoped client** (`createClient()` from
@@ -75,6 +82,16 @@ Employers and admins are both plain Supabase Auth users in the same
 - `admin_profiles`, `employer_profiles` — see auth model above.
   `candidates.assigned_admin_name` records ownership (sourced from
   `src/lib/admins.ts`), shown as a dropdown on `CandidateForm.tsx`.
+- `site_content`, `site_settings` — singleton tables (`id = 'homepage'` /
+  `id = 'default'`, always exactly one row) backing the public homepage.
+  Public-readable RLS (`to public`, marketing copy only, nothing
+  sensitive); writes only ever happen via `supabaseAdmin` from superadmin
+  server actions, so no authenticated/anon write policy exists or is
+  needed. `site_content.content` is a single `jsonb` blob shaped like
+  `HomepageContent` (`src/lib/site-content.ts`); `site_settings` holds SEO
+  fields, social links, and `maintenance_mode` (`src/lib/site-settings.ts`).
+  Homepage components render DB content merged over hardcoded defaults, so
+  a missing/partial row never breaks the page.
 
 Countries are **not** database-backed — `src/lib/taxonomy.ts` has a full
 world list with a curated "top" group (Canada, Germany, Hong Kong, Japan,
@@ -102,6 +119,25 @@ they're already active in another job's pipeline, to prevent double-booking.
 
 ## Admin panel structure
 
+- **Nav** (`AdminNav.tsx`) is grouped into dropdowns, not a flat list:
+  Dashboard (standalone) · Candidates (CV Submissions, Profiles) · Jobs
+  (Employers, Roles, Job Categories) · Superadmin (Settings, SEO, Edit
+  Homepage — rendered only when `isSuperAdmin`). Labels like "Profiles"
+  and "Roles" are just nav display names — the underlying routes are still
+  `/admin/candidates` and `/admin/jobs`. Desktop dropdowns open on hover
+  (with a short close-delay to survive the gap between button and panel)
+  as well as click; mobile flattens each group into a labeled section
+  inside the hamburger panel.
+- Header right side is a `ProfileMenu.tsx` — circular initials avatar
+  (derived from the admin's name) opening a Profile / Log out dropdown.
+  `/admin/profile` lets an admin edit their own display name
+  (`admin_profiles.name`, via `supabaseAdmin` since there's no
+  authenticated-role update policy) and shows their superadmin badge if
+  applicable.
+- A `GlobalSearch.tsx` box (desktop: header row; mobile: row below it)
+  debounce-queries `/admin/search` (candidates/jobs/employers by
+  name/email/phone/company, 5 results each) and links straight to the
+  matched record.
 - `/admin/dashboard` — stat cards (new CVs last 7 days, pending employer
   approvals, candidates stalled 14+ days with no status change, open jobs
   30+ days with zero non-rejected applicants) plus the underlying lists,
@@ -117,9 +153,17 @@ they're already active in another job's pipeline, to prevent double-booking.
 - `/admin/candidates` — search/filter/paginated list (`_shared/` components:
   `CandidateFilterSidebar`, `CandidateSearchBar`, `CandidatePagination`,
   `candidate-filters.ts` for the shared parse/PAGE_SIZE=20 logic), rendered
-  by `CandidatesTable.tsx` which adds row checkboxes and a floating
+  by `CandidatesTable.tsx` which adds row checkboxes, a floating
   bulk-action bar (bulk-add selected candidates to a job's Screened column,
-  or bulk-change status) — see `bulk-actions.ts`.
+  or bulk-change status — see `bulk-actions.ts`), and a per-row status
+  `<select>` that calls the same bulk action with a single-element array
+  for inline status changes without opening the detail page. A "My
+  Candidates" toggle (`MyCandidatesToggle.tsx`) filters
+  `assigned_admin_name` to the logged-in admin via an `assigned` query
+  param (parsed/preserved alongside the other filters in
+  `candidate-filters.ts`). "Export CSV" hits `/admin/candidates/export`,
+  which re-parses the same filter params server-side and streams a CSV of
+  the full filtered set (not just the current page).
   - Candidate detail page wires `CandidateForm` (biodata + ownership),
     `CandidateDocuments`, and `CandidateTimeline`, plus a
     `/candidates/[id]/endorsement` printable summary page
@@ -127,12 +171,33 @@ they're already active in another job's pipeline, to prevent double-booking.
   - New-candidate flow does duplicate detection by phone/email match against
     existing candidates — shows a warning with links to the existing
     profile(s) but does not block creation.
-- `/admin/jobs` — table/kanban toggle (`?view=table|kanban`); job detail page
-  candidate section reuses the same filter/search/pagination pieces as the
-  Candidates list, adding the %fit and Placement columns described above.
+- `/admin/jobs` — table/kanban toggle (`?view=table|kanban`); the table view
+  (`JobsTable.tsx`) has the same inline status `<select>` pattern as
+  Candidates (via `updateJobStatus`) and an "Export CSV" button
+  (`/admin/jobs/export`). Job detail page candidate section reuses the same
+  filter/search/pagination pieces as the Candidates list, adding the %fit
+  and Placement columns described above.
 - `/admin/employers` — approve/reject employer accounts (gates their ability
-  to post jobs); detail page has an editable profile form and lists every
-  job that employer has posted.
+  to post jobs); detail page has an editable profile form, an "Add Job"
+  button that deep-links to `/admin/jobs/new?employer_id=<id>` with that
+  employer pre-selected in the job form, and lists every job that employer
+  has posted.
+- `/admin/superadmin/*` — superadmin-only, each page redirects to
+  `/admin/dashboard` if `isSuperAdmin()` is false:
+  - **Edit Homepage** — a structured content editor (not a drag/drop page
+    builder — deliberately scoped down after discussion) for the Hero,
+    trust stats, Jobs Preview, How It Works steps, and Apply Section copy,
+    with a live-updating hero preview panel. Saves the whole
+    `HomepageContent` object at once via `saveHomepageContent`.
+  - **SEO** — editable site title/description/OG image, written to
+    `site_settings`; consumed by `generateMetadata()` in `src/app/page.tsx`
+    (route-level metadata override, so this DB read only happens for the
+    homepage request, not every page in the app).
+  - **Settings** — editable social links (Footer reads these, falling back
+    to hardcoded defaults for the one client-component page that can't
+    await server data — see Footer note below) and a `maintenance_mode`
+    toggle that swaps the entire homepage for a static "we'll be right
+    back" page while leaving `/admin` and `/employers/portal` untouched.
 
 ## Conventions worth knowing before changing things
 
@@ -176,6 +241,29 @@ they're already active in another job's pipeline, to prevent double-booking.
   the background (e.g. all admin nav items), which keeps the network "busy"
   well after the page is actually visible and interactive. Measure against
   a real content selector instead.
+- **`src/lib/site-settings-defaults.ts` exists solely to be client-safe** —
+  it holds the `SiteSettings` type and hardcoded defaults with *no* import
+  of `supabase-admin`. `src/lib/site-settings.ts` (server-only, wraps the
+  actual DB read in `cache()`) re-exports the same type/const for
+  server-side callers. This split exists because Next.js can't tree-shake
+  a `"server-only"` import out of a module just because a client component
+  only uses one of its named exports — the whole module (and its
+  `supabase-admin` import) still gets pulled into the client bundle and
+  fails the build. `Footer.tsx` is the reason this split exists: it's
+  rendered from one client-component page (`employers/signup/page.tsx`)
+  that can't `await` server data, so `Footer` takes an optional `settings`
+  prop (server-component pages fetch and pass it; the signup page omits it
+  and gets the hardcoded defaults). Don't merge these two files back
+  together, and don't import the server file's `getSiteSettings` from
+  anything a client component might transitively pull in.
+- The homepage (`src/app/page.tsx`) still builds as a **static** route
+  (`○` in the build output) even though it now reads `site_content` /
+  `site_settings` from the database — Next.js doesn't detect a
+  request-specific dependency, so it prerenders at build time. This is
+  fine: every superadmin save action calls `revalidatePath("/")`, which
+  triggers on-demand ISR regeneration, so edits show up without a redeploy.
+  Don't "fix" this by forcing the route dynamic — that would reintroduce a
+  live DB round trip on every homepage hit for no benefit.
 
 ## Environment variables
 
